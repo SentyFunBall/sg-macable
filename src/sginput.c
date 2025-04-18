@@ -177,42 +177,44 @@ void sgAdvanceInputs() {
   }
   sgstate->scrollx = 0;
   sgstate->scrolly = 0;
-  for (i = 0; i < SG_GAMEPAD_LAST + 1; ++i) {
-    if (glfwJoystickPresent (i) && glfwJoystickIsGamepad (i)) {
-      sgstate->gpads[i].connected = 1;
-      if (!sgstate->gpads[i].name) {
-        sgstate->gpads[i].name = (char *)glfwGetGamepadName (i);
-        notef ("Gamepad \"%s\" was connected on id %i\n",
-               sgstate->gpads[i].name, i);
-        sgInsertActiveGamepad (sgstate, i);
-      }
-      glfwGetGamepadState (i, &sgstate->gpads[i].gstate);
-      for (ii = 0; ii < GLFW_GAMEPAD_BUTTON_LAST + 1; ++ii) {
-        char  action   = sgstate->gpads[i].gstate.buttons[ii];
-        char  oldstate = sgstate->gpads[i].buttons[ii];
-        char *sgbutton = (char *)sgstate->gpads[i].buttons + ii;
-        if (oldstate == SG_PRESS) {
-          (*sgbutton) = SG_HOLD;
-        } else if (oldstate == SG_RELEASE) {
-          (*sgbutton) = SG_NOHOLD;
+  #ifndef __APPLE__  //no joystick on apple
+    for (i = 0; i < SG_GAMEPAD_LAST + 1; ++i) {
+      if (glfwJoystickPresent (i) && glfwJoystickIsGamepad (i)) {
+        sgstate->gpads[i].connected = 1;
+        if (!sgstate->gpads[i].name) {
+          sgstate->gpads[i].name = (char *)glfwGetGamepadName (i);
+          notef ("Gamepad \"%s\" was connected on id %i\n",
+                sgstate->gpads[i].name, i);
+          sgInsertActiveGamepad (sgstate, i);
         }
-        if (action == GLFW_PRESS &&
-            (oldstate == SG_NOHOLD || oldstate == SG_RELEASE)) {
-          (*sgbutton) = SG_PRESS;
-        } else if (action == GLFW_RELEASE &&
-                   (oldstate == SG_HOLD || oldstate == SG_PRESS)) {
-          (*sgbutton) = SG_RELEASE;
+        glfwGetGamepadState (i, &sgstate->gpads[i].gstate);
+        for (ii = 0; ii < GLFW_GAMEPAD_BUTTON_LAST + 1; ++ii) {
+          char  action   = sgstate->gpads[i].gstate.buttons[ii];
+          char  oldstate = sgstate->gpads[i].buttons[ii];
+          char *sgbutton = (char *)sgstate->gpads[i].buttons + ii;
+          if (oldstate == SG_PRESS) {
+            (*sgbutton) = SG_HOLD;
+          } else if (oldstate == SG_RELEASE) {
+            (*sgbutton) = SG_NOHOLD;
+          }
+          if (action == GLFW_PRESS &&
+              (oldstate == SG_NOHOLD || oldstate == SG_RELEASE)) {
+            (*sgbutton) = SG_PRESS;
+          } else if (action == GLFW_RELEASE &&
+                    (oldstate == SG_HOLD || oldstate == SG_PRESS)) {
+            (*sgbutton) = SG_RELEASE;
+          }
         }
-      }
 
-    } else {
-      sgstate->gpads[i].connected = 0;
-      if (sgstate->gpads[i].name) {
-        notef ("Gamepad \"%s\" was disconnected on id %i\n",
-               sgstate->gpads[i].name, i);
-      }
+      } else {
+        sgstate->gpads[i].connected = 0;
+        if (sgstate->gpads[i].name) {
+          notef ("Gamepad \"%s\" was disconnected on id %i\n",
+                sgstate->gpads[i].name, i);
+        }
 
-      sgstate->gpads[i].name = NULL;
+        sgstate->gpads[i].name = NULL;
+      }
     }
-  }
+  #endif
 }
