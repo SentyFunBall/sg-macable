@@ -1,6 +1,25 @@
-
+w, h = stormground.getScreen()
+print(w, h)
+print("GOOD MORNING TERMINAL")
 function onTick()
-  stormground.setColor(255,255,255)
-  x,y=stormground.getCursor()
-  stormground.drawLine(50,50,x,y)
+  stormground.setColor(100,100,100)
+
+  stormground.drawRectangle(0, 0, w, h)
+  stormground.setColor(255, 0, 0)
+  stormground.drawRectangle(0,0,5,5, true)
+  stormground.setColor(0, 255, 0)
+  stormground.drawRectangle(0,h-5,5,5, true)
+  stormground.setColor(0, 0, 255)
+  stormground.drawRectangle(w-5,0,5,5, true)
+  stormground.setColor(255, 255, 0)
+  stormground.drawRectangle(w-5,h-5,5,5, true)
+
+  stormground.setColor(200,200,200)
+  stormground.drawText(10, 3, 1, "Hello!")
+  stormground.drawText(10, 13, 2, "WORLD!")
+  stormground.drawCircle(10, 40, 5)
+  stormground.drawTriangle(60, 40, 70, 40, 65, 50)
+
+  stormground.setColor(0,0,0)
+  stormground.drawLine(80, 50, 90, 65)
 end
