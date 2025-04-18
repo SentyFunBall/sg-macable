@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "glad/glad.h"
 
 uint32_t sgCompileShader (int stage, char const* source, int size) {
   uint32_t shader = glCreateShader (stage);
@@ -34,4 +35,33 @@ uint32_t sgLinkShaderProgram (uint32_t* shaderv, int shaderc) {
     return 0;
   }
   return prog;
+}
+
+sgShader sgCompileShaderFromMemory(const char* vSource, size_t vSize, const char* fSource, size_t fSize) {
+  sgShader shader = {0};
+  uint32_t vShader = sgCompileShader(GL_VERTEX_SHADER, vSource, vSize);
+  if (!vShader) {
+      return shader; // Return empty shader on failure
+  }
+  uint32_t fShader = sgCompileShader(GL_FRAGMENT_SHADER, fSource, fSize);
+  if (!fShader) {
+      glDeleteShader(vShader);
+      return shader; // Return empty shader on failure
+  }
+
+  uint32_t shaders[] = {vShader, fShader};
+  shader.prog = sgLinkShaderProgram(shaders, 2);
+
+  // Delete the shaders as they're linked into the program now and no longer needed
+  glDeleteShader(vShader);
+  glDeleteShader(fShader);
+
+  return shader;
+}
+
+void sgDeleteShader(sgShader* shader) {
+  if (shader && shader->prog != 0) {
+      glDeleteProgram(shader->prog);
+      shader->prog = 0;
+  }
 }

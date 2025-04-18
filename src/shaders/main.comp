@@ -1,4 +1,4 @@
-#version 460 core
+#version 430 core
 
 #define SG_RECTANGLE_F 0
 #define SG_CIRCLE_F    1
