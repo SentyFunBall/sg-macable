@@ -9,7 +9,7 @@ PLAT= guess
 
 SOURCES := $(wildcard src/*.c)
 MKCLIFLAGS= "--no-print-directory"
-PLATS := guess linux mingw
+PLATS := guess linux mingw Darwin
 UNAME = uname
 WHICH= which
 
@@ -26,6 +26,9 @@ Linux linux:
 
 mingw:
 	$(MAKE) $(MKCLIFLAGS) all PLAT=mingw WHICH=where
+
+Darwin:
+	$(MAKE) $(MKCLIFLAGS) all PLAT=Darwin
 
 #=======================BUILD======================#
 

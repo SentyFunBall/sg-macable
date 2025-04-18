@@ -5,13 +5,13 @@ override MAKEFLAGS=$(MFLAGS) --
 PLAT= 
 CC= 
 EXCFLAGS= 
-CFLAGS= -O3 -std=c99 $(EXCFLAGS)
+CFLAGS= -O3 -std=c99 $(EXCFLAGS) -g
 LIB_PREF= 
 LIB_EXT= 
 EXE_EXT= 
 
 MKCLIFLAGS= "--no-print-directory"
-PLATS := linux mingw
+PLATS := linux mingw Darwin
 
 LUALIB= liblua.a
 
@@ -22,6 +22,10 @@ target: $(PLAT)
 Linux linux:
 	@echo Building $(SG_N) for linux
 	$(MAKE) $(MKCLIFLAGS) all PLAT=linux CC=gcc CFLAGS="-O2 -std=c11 -I../include -I../lib" LIB_PREF="lib" LIB_EXT=".a"
+
+Darwin:
+	@echo Building $(SG_N) libs for Darwin
+	$(MAKE) $(MKCLIFLAGS) all PLAT=macosx CC=gcc CFLAGS="-O2 -std=c11 -I../include -I../lib" LIB_PREF="lib" LIB_EXT=".a"
 
 mingw:
 	@echo Building $(SG_N).exe for Windows
