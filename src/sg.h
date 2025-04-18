@@ -1,18 +1,20 @@
 #pragma once
 
 #if defined(__unix__) || defined(__APPLE__)
-#  define _THEPOSIX 1
+#  define _THEPOSIX 1 //who thought this name was a good idea?
 #  include <unistd.h>
 #elif defined(_WIN32)
 #  define _THEWINDOWS 1
 #  include "rc.h"
-
 #endif
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+
+// Include dependencies first
 #define HYDROGEN_ALL
-#include "hydrogen/hydrogen.h"
+#include "hydrogen/hydrogen.h" // Defines h_vec2
+#include "sgshader.h" // Defines sgShader
 
 #define SG_MAJOR        1
 #define SG_MINOR        2
@@ -20,7 +22,15 @@
 
 #define SG_GAMEPAD_LAST GLFW_JOYSTICK_8
 
+#define SG_RECTANGLE_F 0
+#define SG_CIRCLE_F    1
+#define SG_TRIANGLE_F  2
+#define SG_LINE        3
+
 typedef struct lua_State lua_State;
+
+// Forward declaration needed if SGprimitive is used before its full definition (e.g., in SGstate)
+struct SGprimitive;
 
 typedef struct SGscript {
   lua_State* L;
@@ -74,7 +84,7 @@ typedef struct SGprimitive {
   h_vec2 p2;
   h_vec2 p3;
   h_vec2 p4;
-  int    t;
+  int    type;
 } SGprimitive;
 
 typedef struct SSBO {
@@ -101,7 +111,7 @@ typedef struct SGstate {
   h_buffer    projectFileContent;
   char*       name;
   SGscript*   main;
-  SSBO*       ssbo;
+  SSBO*       ssbo; // Keep this, it holds the primitive buffer
   double      tfps;
   double      time;
   double      realCurX, realCurY;
@@ -115,6 +125,8 @@ typedef struct SGstate {
   SGcolor     col;
   float       delta;
   char        usage;
+  sgShader    displayShader;   // Shader for drawing the final texture
+  float*      pixels;          // ADD CPU pixel buffer (RGBA float)
 } SGstate;
 
 enum {
@@ -122,3 +134,12 @@ enum {
   SG_USAGE_MANDK   = 0,
   SG_USAGE_GAMEPAD,
 };
+
+/* :( */
+void sgDrawRectF_cpu (struct SGstate *sgs, float r, float g, float b, float x1, float y1, float x2, float y2);
+void sgDrawRect_cpu (struct SGstate *sgs, float r, float g, float b, float x1, float y1, float x2, float y2);
+void sgDrawCircleF_cpu (struct SGstate *sgs, float r, float g, float b, float cx, float cy, float radius, float innerRadius);
+void sgDrawTriF_cpu (struct SGstate *sgs, float r, float g, float b, float x1, float y1, float x2, float y2, float x3, float y3);
+void sgDrawLine_cpu (struct SGstate *sgs, float r, float g, float b, float x1, float y1, float x2, float y2);
+void sgClearPixels(struct SGstate *sgs, float r, float g, float b);
+void sgRenderCPUBuffer(struct SGstate *sgs);

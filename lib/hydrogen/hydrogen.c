@@ -950,6 +950,8 @@ char *io_fullpath (char const *path) {
   return (char *)str_cpy (_fpath, PATH_MAX);
 #elif defined(__unix__)
   return realpath (path, NULL);
+#elif defined(__APPLE__)
+  return realpath (path, NULL);
 #endif
 }
 
@@ -957,6 +959,8 @@ int io_changedir (char const *path) {
 #if defined(_WIN32)
   return !SetCurrentDirectory (path);
 #elif defined(__unix__)
+  return chdir (path);
+#elif defined(__APPLE__)
   return chdir (path);
 #endif
 }

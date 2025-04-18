@@ -1,4 +1,8 @@
+#ifdef __APPLE__
+#include <libproc.h>
+#else
 #define _XOPEN_SOURCE 700
+#endif
 #include "sgcli.h"
 
 #include <stdio.h>
@@ -88,11 +92,22 @@ int doTheDoThing (SGstate* sgs, int argc, char** argv) {
   free ((void*)sgs->projectDir);
   sgs->projectDir = realreal;
 
+  #ifdef __APPLE__
+    //get the full path of the executable
+    char path[PATH_MAX];
+    proc_pidpath (getpid(), path, sizeof (path));
+    char* lastSlash = strrchr (path, '/');
+    if (lastSlash) {
+      *lastSlash = '\0';
+    }
+    sgs->projectDir = strdup(path);
+  #endif
+  
   if (io_changedir (sgs->projectDir)) {
     errorf ("Failed to change to target directory\n");
     return 1;
   }
-
+  
   h_buffer projectContent = io_read ("sgproject.json");
   if (!projectContent.data) {
     errorf ("Could not open sgproject.json in (%s)\n", sgs->projectDir);

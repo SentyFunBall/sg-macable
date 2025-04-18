@@ -211,7 +211,7 @@ int strToButtonCode (char const* str) {
 
 void dr (SGstate* sg, float x, float y, float w, float h, char hollow) {
   SGprimitive r = {0};
-  r.t           = SG_PRIMITIVE_RECT;
+  r.type           = SG_PRIMITIVE_RECT;
   r.c[0]        = (float)sg->col.r / 255.f;
   r.c[1]        = (float)sg->col.g / 255.f;
   r.c[2]        = (float)sg->col.b / 255.f;
@@ -669,7 +669,7 @@ int l_drawLine (lua_State* L) {
     lua_pop (L, 1);
   }
   SGprimitive p = {0};
-  p.t           = SG_PRIMITIVE_LINE;
+  p.type           = SG_PRIMITIVE_LINE;
   p.c[0]        = (float)sgs->col.r / 255.f;
   p.c[1]        = (float)sgs->col.g / 255.f;
   p.c[2]        = (float)sgs->col.b / 255.f;
@@ -681,6 +681,10 @@ int l_drawLine (lua_State* L) {
     h_vec2 pt = p.p1;
     p.p1      = p.p2;
     p.p2      = pt;
+  }
+  if(!sgs || !sgs->ssbo) {
+    printf("sgs or sgs->ssbo is NULL\n");
+    return 0;
   }
   if (sgs->ssbo->primc >= 0xffff - 1)
     return 0;
@@ -726,7 +730,7 @@ int l_drawCircle (lua_State* L) {
     lua_pop (L, 1);
   }
   SGprimitive r = {0};
-  r.t           = SG_PRIMITIVE_CIRCLE;
+  r.type           = SG_PRIMITIVE_CIRCLE;
   r.c[0]        = (float)sgs->col.r / 255.f;
   r.c[1]        = (float)sgs->col.g / 255.f;
   r.c[2]        = (float)sgs->col.b / 255.f;
@@ -765,7 +769,7 @@ int l_drawTriangle (lua_State* L) {
     vs[i] = (vs[i]);
   }
   SGprimitive t = {0};
-  t.t           = SG_PRIMITIVE_TRIANGLE;
+  t.type           = SG_PRIMITIVE_TRIANGLE;
   t.c[0]        = (float)sgs->col.r / 255.f;
   t.c[1]        = (float)sgs->col.g / 255.f;
   t.c[2]        = (float)sgs->col.b / 255.f;

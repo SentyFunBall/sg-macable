@@ -59,7 +59,8 @@ int sgGLImageTextureType (SGimage *img) {
     type = GL_RG;
     break;
   case 1:
-    type = GL_R;
+    // type = GL_R; // Use GL_RED for Core Profile
+    type = GL_RED;
     break;
   }
   return type;
@@ -74,7 +75,8 @@ void sgGenImageTexture (SGimage *img, int mip, int wrap_s, int wrap_t,
         img->channels);
     return;
   }
-  glGenTextures (1, &img->tex);
+  // glGenTextures (1, &img->tex); // Warning: passing 'int *' to parameter of type 'GLuint *'
+  glGenTextures (1, (GLuint*)&img->tex); // Cast to fix warning
   glBindTexture (GL_TEXTURE_2D, img->tex);
 
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
@@ -114,21 +116,39 @@ void sgFreeImage (SGimage *img) {
 }
 
 void sgFreeImageTexture (SGimage *img) {
-  glDeleteTextures (1, &img->tex);
+  // glDeleteTextures (1, &img->tex); // Warning: passing 'int *' to parameter of type 'const GLuint *'
+  glDeleteTextures (1, (const GLuint*)&img->tex); // Cast to fix warning
   img->tex = 0;
 }
 
 int sgGenTextures2D (int min_filter, int mag_filter, int wrap_s, int wrap_t,
                      int format, int w, int h, int n, SGtexture *texturev) {
-  uint32_t texv[n];
-  glCreateTextures (GL_TEXTURE_2D, n, texv);
+  // uint32_t texv[n]; // Use GLuint array directly
+  GLuint tex_ids[n]; // Array to hold generated texture IDs
+  // glCreateTextures (GL_TEXTURE_2D, n, texv); // DSA function
+  glGenTextures(n, tex_ids); // Non-DSA equivalent
+
   for (int i = 0; i < n; ++i) {
-    glTextureParameteri (texv[i], GL_TEXTURE_MIN_FILTER, min_filter);
-    glTextureParameteri (texv[i], GL_TEXTURE_MAG_FILTER, mag_filter);
-    glTextureParameteri (texv[i], GL_TEXTURE_WRAP_S, wrap_s);
-    glTextureParameteri (texv[i], GL_TEXTURE_WRAP_T, wrap_t);
-    glTextureStorage2D (texv[i], 1, format, w, h);
-    texturev[i].tex      = texv[i];
+    glBindTexture(GL_TEXTURE_2D, tex_ids[i]); // Bind the current texture
+
+    // glTextureParameteri (texv[i], GL_TEXTURE_MIN_FILTER, min_filter); // DSA
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter); // Non-DSA
+    // glTextureParameteri (texv[i], GL_TEXTURE_MAG_FILTER, mag_filter); // DSA
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter); // Non-DSA
+    // glTextureParameteri (texv[i], GL_TEXTURE_WRAP_S, wrap_s); // DSA
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s); // Non-DSA
+    // glTextureParameteri (texv[i], GL_TEXTURE_WRAP_T, wrap_t); // DSA
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t); // Non-DSA
+
+    // glTextureStorage2D (texv[i], 1, format, w, h); // DSA
+    // Use glTexStorage2D (requires GL 4.2) or glTexImage2D (compatible)
+    // Assuming format is a sized internal format like GL_RGBA32F
+    glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, GL_RGBA, GL_FLOAT, NULL); // Example, adjust format/type if needed
+    // Or if glTexStorage2D is available in your target GL version (4.1 doesn't guarantee it, 4.2+ does)
+    // glTexStorage2D(GL_TEXTURE_2D, 1, format, w, h); // Non-DSA
+
+    // texturev[i].tex      = texv[i];
+    texturev[i].tex      = tex_ids[i]; // Store the generated ID
     texturev[i].w        = w;
     texturev[i].h        = h;
     texturev[i].format   = format;
@@ -137,32 +157,60 @@ int sgGenTextures2D (int min_filter, int mag_filter, int wrap_s, int wrap_t,
     texturev[i].wrap_s   = wrap_s;
     texturev[i].wrap_t   = wrap_t;
   }
+  glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
   return 1;
 }
 
 void sgBindTexture (SGtexture tex, int rw) {
-  glBindImageTexture (0, tex.tex, 0, GL_FALSE, 0, rw, tex.format);
+  // glBindImageTexture (0, tex.tex, 0, GL_FALSE, 0, rw, tex.format); // DSA / Image Load/Store - Comment out
+  // TODO: Implement using glActiveTexture/glBindTexture if needed for rendering
+  (void)tex; // Suppress unused parameter warning for now
+  (void)rw;  // Suppress unused parameter warning for now
 }
 
 void sgUnbindTexture (void) {
-  glBindImageTexture (0, 0, 0, 0, 0, GL_READ_ONLY, 0);
+  // glBindImageTexture (0, 0, 0, 0, 0, GL_READ_ONLY, 0); // DSA / Image Load/Store - Comment out
+  // TODO: Implement using glActiveTexture/glBindTexture if needed
 }
 
 void sgRegenerateTexture (SGtexture *tex) {
-  glBindImageTexture (0, 0, 0, 0, 0, GL_READ_ONLY, 0);
+  // glBindImageTexture (0, 0, 0, 0, 0, GL_READ_ONLY, 0); // DSA / Image Load/Store - Comment out
 
-  sgFreeTextures (tex, 1);
-  glCreateTextures (GL_TEXTURE_2D, 1, &tex->tex);
-  glTextureParameteri (tex->tex, GL_TEXTURE_MIN_FILTER, tex->min_filt);
-  glTextureParameteri (tex->tex, GL_TEXTURE_MAG_FILTER, tex->mag_filt);
-  glTextureParameteri (tex->tex, GL_TEXTURE_WRAP_S, tex->wrap_s);
-  glTextureParameteri (tex->tex, GL_TEXTURE_WRAP_T, tex->wrap_t);
-  glTextureStorage2D (tex->tex, 1, tex->format, tex->w, tex->h);
+  sgFreeTextures (tex, 1); // This now uses glDeleteTextures correctly
+
+  // glCreateTextures (GL_TEXTURE_2D, 1, &tex->tex); // DSA
+  glGenTextures(1, &tex->tex); // Non-DSA
+  glBindTexture(GL_TEXTURE_2D, tex->tex); // Bind the new texture
+
+  // glTextureParameteri (tex->tex, GL_TEXTURE_MIN_FILTER, tex->min_filt); // DSA
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex->min_filt); // Non-DSA
+  // glTextureParameteri (tex->tex, GL_TEXTURE_MAG_FILTER, tex->mag_filt); // DSA
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex->mag_filt); // Non-DSA
+  // glTextureParameteri (tex->tex, GL_TEXTURE_WRAP_S, tex->wrap_s); // DSA
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex->wrap_s); // Non-DSA
+  // glTextureParameteri (tex->tex, GL_TEXTURE_WRAP_T, tex->wrap_t); // DSA
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex->wrap_t); // Non-DSA
+
+  // glTextureStorage2D (tex->tex, 1, tex->format, tex->w, tex->h); // DSA
+  // Use glTexStorage2D (requires GL 4.2) or glTexImage2D (compatible)
+  glTexImage2D(GL_TEXTURE_2D, 0, tex->format, tex->w, tex->h, 0, GL_RGBA, GL_FLOAT, NULL); // Example, adjust format/type if needed
+  // Or if glTexStorage2D is available:
+  // glTexStorage2D(GL_TEXTURE_2D, 1, tex->format, tex->w, tex->h); // Non-DSA
+
+  glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
 }
 
 void sgFreeTextures (SGtexture *texv, int texc) {
   int i;
+  // Need an array of GLuints to pass to glDeleteTextures
+  GLuint *tex_ids = malloc(sizeof(GLuint) * texc);
+  if (!tex_ids) return; // Handle allocation failure
+
   for (i = 0; i < texc; ++i) {
-    glDeleteTextures (1, &texv->tex);
+    // glDeleteTextures (1, &texv->tex); // Incorrect loop logic and type
+    tex_ids[i] = texv[i].tex; // Collect texture IDs
+    texv[i].tex = 0; // Clear the ID in the struct
   }
+  glDeleteTextures(texc, tex_ids); // Delete all textures at once
+  free(tex_ids); // Free the temporary array
 }
