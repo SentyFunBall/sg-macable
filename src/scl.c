@@ -20,7 +20,7 @@
 #  include <dirent.h>
 #  include <unistd.h>
 #  ifdef __APPLE__
-#    incldue < libproc.h>
+#    include <libproc.h>
 #  endif
 
 typedef struct timespec timespec_t;
@@ -396,7 +396,7 @@ long scl_wtime (char const *path) {
   if (stat (path, &s) == -1) {
     return 0;
   }
-  return s.st_mtim.tv_sec;
+  return s.st_mtime;
 #elif defined(_WIN32)
   return 0;
 #endif

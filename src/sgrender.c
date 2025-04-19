@@ -135,8 +135,10 @@ int sgInitRenderPipe (SGstate *sgs) {
   memcpy (buf, base, sizeof (base));
   sgs->rp.verts += sizeof (base) / sizeof (base[0]);
 
-  glCreateVertexArrays (1, &vao);
-  glCreateBuffers (1, &vbo);
+  //glCreateVertexArrays (1, &vao); fuck you and your DSA
+  //glCreateBuffers (1, &vbo);
+  glGenVertexArrays(1, &vao);
+  glGenBuffers(1, &vbo);
 
   glBindBuffer (GL_ARRAY_BUFFER, vbo);
   glBufferData (GL_ARRAY_BUFFER, sizeof (SGvertex) * n, buf, GL_DYNAMIC_DRAW);
